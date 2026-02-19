@@ -7,6 +7,7 @@
 
 <style>
 *,*::before,*::after{box-sizing:border-box;}
+:root{color-scheme:light;}
 body{
   font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;
   margin:14px;max-width:760px;
@@ -30,8 +31,20 @@ h1{font-size:18px;margin:6px 0 12px}
 
 label{font-size:12px;margin-top:10px;display:block}
 select,input:not([type=checkbox]){
-  width:100%;padding:10px;border-radius:12px;border:1px solid #ccc
+  width:100%;padding:10px;border-radius:12px;border:1px solid #ccc;
+  background:#fff;color:#111;
 }
+select{
+  -webkit-appearance:none;appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg%20xmlns%3D'http%3A//www.w3.org/2000/svg'%20viewBox%3D'0%200%2020%2020'%3E%3Cpath%20fill%3D'%23666'%20d%3D'M5.5%207.5%2010%2012l4.5-4.5'%20/%3E%3C/svg%3E");
+  background-repeat:no-repeat;
+  background-position:right 12px center;
+  background-size:12px 12px;
+  padding-right:36px;
+}
+input[type=number]{-moz-appearance:textfield;}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
+
 
 .labelStrong{font-weight:900;}
 input.compact-input,select.compact-input{padding:8px 10px;border-radius:10px;}
@@ -89,12 +102,15 @@ button.secondary{background:#eee;color:#111}
   left:0;
   z-index:2;
   background:#fff;
-  min-width:220px;
-  max-width:320px;
+  /* 項目列の幅（スマホでも読める範囲で少しだけ細く） */
+  min-width:200px;
+  max-width:300px;
 }
 .estimate-table thead th:first-child{z-index:3;background:#f4f6f8;}
 
-.estimate-table tr.section td{background:#f7fbff;font-weight:900;position:static !important}
+/* セクション行（初回カウンセリング / プラン / 出張費 / その他）背景を少し濃く */
+.estimate-table tr.section td{background:#e7f2ff;font-weight:900;font-size:0.92em}
+.estimate-table tr.section td:first-child{background:#e7f2ff;z-index:2}
 .estimate-table tr.discount td{color:#c00;font-weight:900}
 .estimate-table tr.surcharge td{color:#0a6;font-weight:900}
 .estimate-table tr.subtot td{font-weight:900}
@@ -104,11 +120,11 @@ button.secondary{background:#eee;color:#111}
 
 @media (max-width:520px){
   .scroll-hint{display:block}
-  .estimate-table{font-size:11px;min-width:480px}
+  .estimate-table{font-size:11.5px;min-width:480px}
   .estimate-table th,.estimate-table td{padding:7px}
   .estimate-table th.num,.estimate-table td.num{min-width:84px}
-  .estimate-table tfoot td.num{font-size:13px}
-  .estimate-table th:first-child,.estimate-table td:first-child{min-width:200px}
+  .estimate-table tfoot td.num{font-size:14px}
+  .estimate-table th:first-child,.estimate-table td:first-child{min-width:180px}
 }
 
 
@@ -519,7 +535,7 @@ function renderEstimate(rows, grandTotal){
   const esc = (s)=> String(s).replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
   estimateBody.innerHTML = rows.map(r=>{
     if(r.type==="section"){
-      return `<tr class="section"><td colspan="4">${esc(r.title)}</td></tr>`;
+      return `<tr class="section"><td class="sectionCell">${esc(r.title)}</td><td></td><td></td><td></td></tr>`;
     }
     const cls = r.cls ? ` ${r.cls}` : "";
     // muted row: message style (span all columns)
