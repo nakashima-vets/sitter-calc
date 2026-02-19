@@ -81,17 +81,31 @@ button.secondary{background:#eee;color:#111}
 .estimate-table tfoot td.num{font-size:16px}
 .estimate-table .muted{color:#666;font-weight:600}
 
+@media (max-width:520px){
+  table{min-width:520px;}
+  .estimate-table{font-size:12px;}
+  .estimate-table th,.estimate-table td{padding:8px;}
+  .estimate-table tfoot td.num{font-size:14px;}
+}
+
 
 .form-section{margin-top:14px}
 .sectionTitle{
-  font-weight:900;font-size:14px;
-  padding:10px 12px;border-radius:12px;
-  background:#fff6d6;border:1px solid #ffe3a1;color:#5a4300;
-  margin:6px 0 10px
+  display:flex;align-items:center;gap:10px;
+  font-weight:900;font-size:13px;
+  padding:0;margin:10px 2px 8px;
+  background:transparent;border:none;color:#5a4300;
 }
-.sectionTitle.discount{
-  background:#ffe5e5;border-color:#ffcccc;color:#7a1e1e;
+.sectionTitle::before{
+  content:"";width:10px;height:10px;border-radius:3px;
+  background:#ffd978;flex:0 0 auto;
 }
+.sectionTitle::after{
+  content:"";height:1px;background:#ffe3a1;flex:1;
+}
+.sectionTitle.discount{color:#7a1e1e;}
+.sectionTitle.discount::before{background:#ffb3b3;}
+.sectionTitle.discount::after{background:#ffcccc;}
 .subTitle{font-weight:900;font-size:13px;color:#333;margin:10px 2px 6px}
 .heads{display:grid;grid-template-columns:1fr;gap:10px}
 @media(min-width:640px){.heads{grid-template-columns:1fr 1fr;gap:12px}}
