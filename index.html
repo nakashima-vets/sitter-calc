@@ -6,6 +6,7 @@
 <title>ペットシッター 計算シミュレーター</title>
 
 <style>
+*,*::before,*::after{box-sizing:border-box;}
 body{
   font-family:system-ui,-apple-system,"Noto Sans JP",sans-serif;
   margin:14px;max-width:760px;
@@ -32,6 +33,11 @@ select,input:not([type=checkbox]){
   width:100%;padding:10px;border-radius:12px;border:1px solid #ccc
 }
 
+.labelStrong{font-weight:900;}
+input.compact-input{padding:8px 10px;border-radius:10px;}
+input.narrow{max-width:220px;}
+@media(min-width:640px){input.narrow{max-width:260px;}}
+
 .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grid4{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 @media(min-width:640px){
@@ -53,6 +59,46 @@ button{
 }
 button.secondary{background:#eee;color:#111}
 
+
+.table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #eee}
+.scroll-hint{display:none;font-size:12px;color:#666;margin:6px 2px}
+@media(max-width:560px){.scroll-hint{display:block}}
+
+.result-bar{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;margin-bottom:10px}
+.meta{font-size:12px;color:#444;font-weight:700}
+.msg{font-size:12px;color:#b00;margin-top:4px}
+@media(max-width:560px){.result-bar{flex-direction:column}.total{font-size:22px}}
+
+.estimate-table{width:100%;border-collapse:collapse;min-width:560px;background:#fff}
+.estimate-table th,.estimate-table td{border:1px solid #ddd;padding:10px;vertical-align:top}
+.estimate-table th{background:#f4f6f8;font-weight:900;text-align:left}
+.estimate-table th.num,.estimate-table td.num{text-align:right;white-space:nowrap}
+.estimate-table tr.section td{background:#f7fbff;font-weight:900}
+.estimate-table tr.discount td{color:#c00;font-weight:900}
+.estimate-table tr.surcharge td{color:#0a6;font-weight:900}
+.estimate-table tr.subtot td{font-weight:900}
+.estimate-table tfoot td{background:#111;color:#fff;font-weight:900}
+.estimate-table tfoot td.num{font-size:16px}
+.estimate-table .muted{color:#666;font-weight:600}
+
+
+.form-section{margin-top:14px}
+.sectionTitle{
+  font-weight:900;font-size:14px;
+  padding:10px 12px;border-radius:12px;
+  background:#fff6d6;border:1px solid #ffe3a1;color:#5a4300;
+  margin:6px 0 10px
+}
+.sectionTitle.discount{
+  background:#ffe5e5;border-color:#ffcccc;color:#7a1e1e;
+}
+.subTitle{font-weight:900;font-size:13px;color:#333;margin:10px 2px 6px}
+.heads{display:grid;grid-template-columns:1fr;gap:10px}
+@media(min-width:640px){.heads{grid-template-columns:1fr 1fr;gap:12px}}
+.field label{margin-top:0}
+.checkbox-line{display:flex;gap:10px;align-items:flex-start;font-size:13px;margin-top:10px}
+.checkbox-line input{margin-top:2px}
+
 #copyArea{display:none;}
 </style>
 </head>
@@ -69,76 +115,115 @@ button.secondary{background:#eee;color:#111}
 <div class="card">
 <div id="serviceLabel">サービス：ペットシッター</div>
 
-<div class="checks">
-  <label><input type="checkbox" id="patient"> 当院患者</label>
-  <label><input type="checkbox" id="review"> レビューキャンペーン</label>
+<div class="form-section">
+  <div class="sectionTitle">★カウンセリング</div>
+  <label class="checkbox-line labelStrong"><input type="checkbox" id="counseling"> 初回カウンセリング費（+2,500円／1回）</label>
+
+  <label class="labelStrong">有料駐車場（カウンセリング時／円）</label>
+  <input id="parkingCounsel" class="compact-input narrow" type="number" min="0" value="0" placeholder="例：200">
 </div>
 
-<label>サービス回数</label>
-<select id="visits"></select>
+<div class="form-section">
+  <div class="sectionTitle">★シッティング</div>
 
-<label>頭数</label>
-<div class="grid4">
-  <div><label>猫</label><select id="cat"></select></div>
-  <div><label>小型犬</label><select id="small"></select></div>
-  <div><label>中型犬</label><select id="medium"></select></div>
-  <div><label>大型犬</label><select id="large"></select></div>
+  <label class="labelStrong">サービス回数</label>
+  <select id="visits"></select>
+
+  <div class="subTitle labelStrong">頭数</div>
+  <div class="heads">
+    <div class="field"><label class="labelStrong">猫</label><select id="cat"></select></div>
+    <div class="field"><label class="labelStrong">小型犬</label><select id="small"></select></div>
+    <div class="field"><label class="labelStrong">中型犬</label><select id="medium"></select></div>
+    <div class="field"><label class="labelStrong">大型犬</label><select id="large"></select></div>
+  </div>
+
+  <label class="labelStrong">有料駐車場（シッティング時／円/回）</label>
+  <input id="parkingVisit" class="compact-input narrow" type="number" min="0" value="0" placeholder="例：200">
 </div>
 
-<div class="row" style="margin-top:10px">
-  <div>
-    <label>時間延長</label>
-    <select id="ext">
-      <option value="0">なし</option>
-      <option value="1">15分</option>
-      <option value="2">30分</option>
-      <option value="3">45分</option>
-      <option value="4">60分</option>
-    </select>
-  </div>
-  <div>
-    <label>有料駐車場（円/回）</label>
-    <input id="parking" type="number" min="0" value="0">
-  </div>
+<div class="form-section">
+  <div class="sectionTitle discount">★割引</div>
+  <label class="checkbox-line labelStrong"><input type="checkbox" id="review"> レビューキャンペーン（プラン -20%）</label>
 </div>
 
-<div class="row" style="margin-top:10px">
-  <div>
-    <label>鍵返却</label>
-    <select id="keyReturn">
-      <option value="0">受付返却</option>
-      <option value="500">こねこ便</option>
-      <option value="800">簡易書留</option>
-    </select>
-  </div>
-  <div>
-    <label><input type="checkbox" id="busy"> 緊忙期（+20%）</label>
-  </div>
+<div class="form-section">
+  <div class="sectionTitle">★オプション</div>
+
+  <label class="labelStrong">鍵返却</label>
+  <select id="keyReturn">
+    <option value="0">受付返却</option>
+    <option value="500">こねこ便</option>
+    <option value="800">簡易書留</option>
+  </select>
+
+  <label class="labelStrong">時間延長</label>
+  <select id="ext">
+    <option value="0">なし</option>
+    <option value="1">15分</option>
+    <option value="2">30分</option>
+    <option value="3">45分</option>
+    <option value="4">60分</option>
+  </select>
+
+  <label class="checkbox-line labelStrong"><input type="checkbox" id="busy"> 緊忙期（プラン +20%）</label>
+  <label class="checkbox-line labelStrong"><input type="checkbox" id="afterHours"> 時間外料金（20:00-8:00 / プラン +20%）</label>
 </div>
 
 <div style="margin-top:12px">
-  <button onclick="calc()">計算</button>
-  <button class="secondary" onclick="copyResult()">コピー</button>
+  <button onclick="copyResult()">コピー</button>
 </div>
 </div>
 
+
 <div class="card">
-<div class="total" id="total">¥0</div>
-<div class="list" id="breakdown"></div>
-<pre id="copyArea"></pre>
+
+  <div class="result-bar">
+    <div>
+      <div class="meta" id="resultMeta">—</div>
+      <div class="msg" id="resultMessage"></div>
+    </div>
+    <div class="total" id="total">¥0</div>
+  </div>
+
+  <div class="scroll-hint">※横にスクロールできます</div>
+  <div class="table-wrap">
+    <table class="estimate-table" aria-label="お見積り">
+      <thead>
+        <tr>
+          <th>お見積り</th>
+          <th class="num">単価</th>
+          <th class="num">回数</th>
+          <th class="num">小計</th>
+        </tr>
+      </thead>
+      <tbody id="estimateBody"></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="3">合計金額（税込）</td>
+          <td class="num" id="grandTotalCell">0</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <pre id="copyArea"></pre>
 </div>
 
 <script>
 const MASTER={
-  dispatch:1100,busy:0.2,review:0.2,
+  dispatch:1100,
+  counseling:2500,
+  busy:0.2,
+  afterHours:0.2,
+  review:0.2,
   sitter:{
     label:"ペットシッター",
-    ext:1100,patient:200,
+    ext:1100,
     plan:{cat:[4400,1100],small:[5000,2500],medium:[5300,2650],large:[5900,2950]}
   },
   nurse:{
     label:"愛玩動物看護師ペットシッター",
-    ext:1400,patient:300,
+    ext:1400,
     plan:{cat:[5500,1400],small:[6100,3000],medium:[6400,3200],large:[7000,3500]}
   }
 };
@@ -164,24 +249,69 @@ function setService(s){
   calc();
 }
 
+// 入力を変えたら自動で再計算（計算ボタン不要）
+function enableAutoCalc(){
+  const ids = ["counseling","review","visits","cat","small","medium","large","ext","parkingCounsel","parkingVisit","keyReturn","busy","afterHours"];
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener("change", calc);
+    el.addEventListener("input", calc);
+  });
+}
+
 function calc(){
   const v = +visits.value;
+  const svc = MASTER[current];
 
-  // 回数0は初期状態（0円・明細なし）
+  const NAME = {cat:"猫", small:"小型犬", medium:"中型犬", large:"大型犬"};
+  const num = n => Math.round(n).toLocaleString("ja-JP");
+  const money = n => "¥"+Math.round(n).toLocaleString("ja-JP");
+  const setMeta = (text) => { resultMeta.textContent = text; };
+  const setMsg = (text) => { resultMessage.textContent = text || ""; };
+  const clearTable = () => { estimateBody.innerHTML = ""; };
+
+  // 行追加ヘルパー
+  const rows = [];
+  const addSection = (title)=> rows.push({type:"section", title});
+  const addItem = (item, unit, qty, sub, cls)=> rows.push({type:"item", item, unit, qty, sub, cls});
+  const esc = (s)=> String(s).replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+  const counselingTotal = counseling.checked ? MASTER.counseling : 0;
+
+  // 表示初期化
+  setMsg("");
+  clearTable();
+
+  // まずメタ
+  setMeta(`サービス：${svc.label} / 回数：${v}回`);
+
+  // 回数0：初回カウンセリングのみOK
   if(v===0){
-    total.textContent="¥0";
-    breakdown.innerHTML="";
-    copyArea.textContent="";
+    const parkCounsel = +parkingCounsel.value || 0;
+    const parkingCounselTotal = (counseling.checked && parkCounsel>0) ? parkCounsel : 0;
+
+    let grand = counselingTotal + parkingCounselTotal;
+    total.textContent = money(grand);
+    grandTotalCell.textContent = num(grand);
+
+    if(counselingTotal>0){
+      addSection("初回カウンセリング");
+      addItem("初回カウンセリング（出張費/登録料込）", num(MASTER.counseling), "1", num(MASTER.counseling));
+      if(parkingCounselTotal>0){
+        addItem("コインパーキング代（カウンセリング）", num(parkCounsel), "1", num(parkingCounselTotal));
+      }
+    }else{
+      setMsg("回数と頭数を入力すると、見積が表示されます。");
+    }
+
+    renderEstimate(rows, grand);
+    copyArea.textContent = buildCopyText(rows, grand);
     return;
   }
 
-  const svc = MASTER[current];
-
-  const heads = {
-    cat:+cat.value, small:+small.value, medium:+medium.value, large:+large.value
-  };
-
-  const NAME = {cat:"猫", small:"小型犬", medium:"中型犬", large:"大型犬"};
+  // 頭数
+  const heads = { cat:+cat.value, small:+small.value, medium:+medium.value, large:+large.value };
 
   // 基準（baseが最大の種別）
   let basePrice = 0, baseKey = "";
@@ -192,108 +322,168 @@ function calc(){
     }
   }
 
-  // 頭数が全部0
+  // 頭数が全部0：初回カウンセリングのみOK
   if(basePrice===0){
-    total.textContent="¥0";
-    breakdown.innerHTML="・頭数を入力してください（猫/小型/中型/大型）";
-    copyArea.textContent="";
+    const parkCounsel = +parkingCounsel.value || 0;
+    const parkingCounselTotal = (counseling.checked && parkCounsel>0) ? parkCounsel : 0;
+
+    let grand = counselingTotal + parkingCounselTotal;
+    total.textContent = money(grand);
+    grandTotalCell.textContent = num(grand);
+
+    if(counselingTotal>0){
+      addSection("初回カウンセリング");
+      addItem("初回カウンセリング（出張費/登録料込）", num(MASTER.counseling), "1", num(MASTER.counseling));
+      if(parkingCounselTotal>0){
+        addItem("コインパーキング代（カウンセリング）", num(parkCounsel), "1", num(parkingCounselTotal));
+      }
+    }
+    addItem("頭数を入力してください（猫/小型犬/中型犬/大型犬）", "", "", "", "muted-row");
+    setMsg("頭数が未入力です。");
+
+    renderEstimate(rows, grand);
+    copyArea.textContent = buildCopyText(rows, grand);
     return;
   }
 
-  // 追加計算（基準種別は1頭分を基準に回す）
-  let addTotal = 0;
-  const addLines = [];
+  // ===== プラン（メイン + ペット追加）=====
+  const baseSub = basePrice * v;
+
+  // 追加（基準種別は1頭分を基準に回す）
+  const addItems = [];
+  let addSubTotal = 0;
   for(const k of Object.keys(heads)){
     const n = heads[k];
     if(n<=0) continue;
+
     const addUnit = svc.plan[k][1];
     const reduce = (k===baseKey) ? 1 : 0;
     const addN = Math.max(0, n - reduce);
     if(addN>0){
-      const amt = addUnit * addN;
-      addTotal += amt;
-      addLines.push(`　- 追加：${NAME[k]} ${addN}頭（${yen(addUnit)}×${addN} = ${yen(amt)}）`);
+      const sub = addUnit * addN * v;
+      addSubTotal += sub;
+      addItems.push({k, addN, addUnit, sub});
     }
   }
 
-  const plan1 = basePrice + addTotal;     // 1回あたり（基準+追加）
-  const planTotal = plan1 * v;            // 回数分
+  const planTotal = baseSub + addSubTotal; // 回数分のプラン合計
 
-  // 調整（プランのみ）
+  // ===== 割増・割引（プランのみ）=====
   const busyAdd = busy.checked ? planTotal * MASTER.busy : 0;
-  const planAfterBusy = planTotal + busyAdd;
+  const afterHoursAdd = afterHours.checked ? planTotal * MASTER.afterHours : 0;
+  const planAfterSurcharges = planTotal + busyAdd + afterHoursAdd;
+  // レビュー割引は「基本プラン（メイン+ペット追加）」のみに適用（割増にはかけない）
+  const reviewDiscount = review.checked ? planTotal * MASTER.review : 0;
 
-  const reviewDiscount = review.checked ? planAfterBusy * MASTER.review : 0;
-  const patientDiscount = (patient.checked && !review.checked) ? svc.patient * v : 0;
+  const planFinal = planAfterSurcharges - reviewDiscount;
 
-  const planFinal = planAfterBusy - reviewDiscount - patientDiscount;
-
-  // そのほか
+  // ===== その他 =====
   const dispatchTotal = MASTER.dispatch * v;
 
   const extCount = +ext.value; // 0-4
   const extTotal = extCount>0 ? svc.ext * extCount * v : 0;
 
-  const park = +parking.value || 0;
-  const parkingTotal = park>0 ? park * v : 0;
+  const parkCounsel = +parkingCounsel.value || 0;
+  const parkVisit = +parkingVisit.value || 0;
+
+  // カウンセリング時：チェックがONのときだけ、1回ぶん加算
+  const parkingCounselTotal = (counseling.checked && parkCounsel>0) ? parkCounsel : 0;
+
+  // シッティング時：回数ぶん加算
+  const parkingVisitTotal = parkVisit>0 ? parkVisit * v : 0;
 
   const key = +keyReturn.value || 0; // 0/500/800（1回だけ）
   const keyTotal = key>0 ? key : 0;
 
-  const grandTotal = planFinal + dispatchTotal + extTotal + parkingTotal + keyTotal;
-  total.textContent = yen(grandTotal);
+  const grandTotal = planFinal + dispatchTotal + extTotal + parkingCounselTotal + parkingVisitTotal + keyTotal + counselingTotal;
 
-  // ===== 表示（0や対象外は出さない）=====
-  const headText = Object.keys(heads)
-    .filter(k=>heads[k]>0)
-    .map(k=>`${NAME[k]}${heads[k]}`)
-    .join(" / ");
+  // ===== 表（お見積り）作成 =====
+  if(counselingTotal>0){
+    addSection("初回カウンセリング");
+    addItem("初回カウンセリング（出張費/登録料込）", num(MASTER.counseling), "1", num(MASTER.counseling));
+    if(parkingCounselTotal>0){
+      addItem("コインパーキング代（カウンセリング）", num(parkCounsel), "1", num(parkingCounselTotal));
+    }
+  }
 
+  addSection("① プラン");
+  addItem(`${svc.label}：メイン ${NAME[baseKey]}（1頭目）`, num(basePrice), String(v), num(baseSub));
+
+  // ペット追加（別種 + メインの2頭目以降）
+  addItems.forEach(({k, addN, addUnit, sub})=>{
+    addItem(`③ ペット追加：${NAME[k]}（${addN}頭）`, num(addUnit), String(v), num(sub));
+  });
+
+  if(busyAdd>0) addItem("繁忙期（+20%）※プランのみ", "", "", `+${num(busyAdd)}`, "surcharge");
+  if(afterHoursAdd>0) addItem("時間外料金（20:00-8:00 / +20%）※プランのみ", "", "", `+${num(afterHoursAdd)}`, "surcharge");
+  if(reviewDiscount>0) addItem("割引：レビューキャンペーン（-20%）※基本プランのみ", "", "", `-${num(reviewDiscount)}`, "discount");
+
+  addItem("プラン小計（割増・割引後）", "", "", num(planFinal), "subtot");
+
+  addSection("② 往復出張費");
+  addItem("一律往復", num(MASTER.dispatch), String(v), num(dispatchTotal));
+
+  if(parkingVisitTotal>0){
+    addItem("コインパーキング代（シッティング）", num(parkVisit), String(v), num(parkingVisitTotal));
+  }
+
+  addSection("その他");
+  if(extTotal>0){
+    addItem(`時間延長（15分毎）`, num(svc.ext), String(extCount*v), num(extTotal));
+  }
+  if(keyTotal>0){
+    const kLabel = (key===500) ? "こねこ便" : (key===800) ? "簡易書留" : "—";
+    addItem(`鍵返却（${kLabel}）`, num(keyTotal), "1", num(keyTotal));
+  }
+
+  total.textContent = money(grandTotal);
+  grandTotalCell.textContent = num(grandTotal);
+
+  renderEstimate(rows, grandTotal);
+  copyArea.textContent = buildCopyText(rows, grandTotal);
+}
+
+function renderEstimate(rows, grandTotal){
+  const esc = (s)=> String(s).replace(/[&<>"']/g, c=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  estimateBody.innerHTML = rows.map(r=>{
+    if(r.type==="section"){
+      return `<tr class="section"><td colspan="4">${esc(r.title)}</td></tr>`;
+    }
+    const cls = r.cls ? ` ${r.cls}` : "";
+    // muted row: message style (span all columns)
+    if(r.cls==="muted-row"){
+      return `<tr><td colspan="4" class="muted">${esc(r.item)}</td></tr>`;
+    }
+    return `<tr class="${esc(cls).trim()}">
+      <td>${esc(r.item)}</td>
+      <td class="num">${r.unit ?? ""}</td>
+      <td class="num">${r.qty ?? ""}</td>
+      <td class="num">${r.sub ?? ""}</td>
+    </tr>`;
+  }).join("");
+}
+
+function buildCopyText(rows, grandTotal){
+  // Excelに貼れるタブ区切り（TSV）
   const lines = [];
-  lines.push(`・サービス：${svc.label}`);
-  lines.push(`・回数：${v}回`);
-  if(headText) lines.push(`・頭数：${headText}`);
-
-  lines.push(`・<strong>プラン（1回あたり）：${yen(plan1)}</strong>（基準：${NAME[baseKey]} 1頭 ${yen(basePrice)}）`);
-  addLines.forEach(x=>lines.push(x));
-  lines.push(`・プラン合計：${yen(planTotal)}（${v}回）`);
-
-  if(busyAdd>0) lines.push(`・緊忙期 +20%（プランのみ）：+${yen(busyAdd)}`);
-  if(reviewDiscount>0) lines.push(`・レビュー -20%（プランのみ）：-${yen(reviewDiscount)}`);
-  if(patientDiscount>0) lines.push(`・当院患者割：-${yen(patientDiscount)}`);
-
-  lines.push(`・プラン小計：${yen(planFinal)}`);
-
-  if(dispatchTotal>0) lines.push(`・出張費：${yen(dispatchTotal)}（${yen(MASTER.dispatch)}/回×${v}回）`);
-  if(extTotal>0) lines.push(`・時間延長：${yen(extTotal)}（${yen(svc.ext)}/15分×${extCount}回×${v}回）`);
-  if(parkingTotal>0) lines.push(`・有料駐車場：${yen(parkingTotal)}（${yen(park)}/回×${v}回）`);
-  if(keyTotal>0) lines.push(`・鍵返却：${yen(keyTotal)}（1回）`);
-
-  lines.push(`・<strong>合計（税込）：${yen(grandTotal)}</strong>`);
-
-  breakdown.innerHTML = lines.join("<br>");
-
-  // ===== コピー文（必要ならここも詳細に）=====
-  const minutes = extCount * 15;
-  copyArea.textContent =
-`【仮見積（税込）】
-サービス：${svc.label}
-回数：${v}回
-頭数：${headText || "（未入力）"}
-基準：${NAME[baseKey]}
-プラン（1回あたり）：${yen(plan1)}
-プラン合計：${yen(planTotal)}
-${busyAdd>0 ? `緊忙期：+${yen(busyAdd)}\n` : ""}${reviewDiscount>0 ? `レビュー：-${yen(reviewDiscount)}\n` : ""}${patientDiscount>0 ? `当院患者割：-${yen(patientDiscount)}\n` : ""}
-プラン小計：${yen(planFinal)}
-出張費：${yen(dispatchTotal)}
-${extTotal>0 ? `延長：${minutes}分（${yen(extTotal)}）\n` : ""}${parkingTotal>0 ? `駐車場：${yen(parkingTotal)}\n` : ""}${keyTotal>0 ? `鍵返却：${yen(keyTotal)}\n` : ""}
-合計：${yen(grandTotal)}
-
-※最終金額は事前カウンセリング後に確定します。`;
+  lines.push(["お見積り","単価","回数","小計"].join("\t"));
+  rows.forEach(r=>{
+    if(r.type==="section"){
+      lines.push([`【${r.title}】`,"","",""].join("\t"));
+      return;
+    }
+    if(r.cls==="muted-row"){
+      lines.push([r.item,"","",""].join("\t"));
+      return;
+    }
+    lines.push([r.item, r.unit||"", r.qty||"", r.sub||""].join("\t"));
+  });
+  lines.push(["合計金額（税込）","","", String(grandTotal).includes("¥") ? grandTotal : Math.round(grandTotal).toLocaleString("ja-JP")].join("\t"));
+  return lines.join("\n");
 }
 
 function copyResult(){
-  const text = document.getElementById("breakdown").innerText.trim();
+  const text = copyArea.textContent.trim();
   if(!text){
     alert("コピーする内容がありません");
     return;
@@ -301,6 +491,12 @@ function copyResult(){
   navigator.clipboard.writeText(text);
   alert("コピーしました");
 }
+
+
+
+
+enableAutoCalc();
+calc();
 </script>
 </body>
 </html>
