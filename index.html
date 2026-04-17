@@ -45,7 +45,6 @@ select{
 input[type=number]{-moz-appearance:textfield;}
 input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0;}
 
-
 .labelStrong{font-weight:900;}
 input.compact-input,select.compact-input{padding:8px 10px;border-radius:10px;}
 input.narrow,select.narrow{max-width:220px;}
@@ -75,7 +74,6 @@ button{
 }
 button.secondary{background:#eee;color:#111}
 
-
 .table-wrap{overflow-x:auto;border-radius:12px;border:1px solid #eee}
 .scroll-hint{display:none;font-size:12px;color:#666;margin:6px 2px}
 @media(max-width:560px){.scroll-hint{display:block}}
@@ -95,20 +93,17 @@ button.secondary{background:#eee;color:#111}
 .estimate-table th{background:#f4f6f8;font-weight:900;text-align:left}
 .estimate-table th.num,.estimate-table td.num{text-align:right;white-space:nowrap;min-width:92px}
 
- /* 項目列は固定（数値だけ横スクロール） */
 .estimate-table th:first-child,
 .estimate-table td:first-child{
   position:sticky;
   left:0;
   z-index:2;
   background:#fff;
-  /* 項目列の幅（スマホでも読める範囲で少しだけ細く） */
   min-width:200px;
   max-width:300px;
 }
 .estimate-table thead th:first-child{z-index:3;background:#f4f6f8;}
 
-/* セクション行（初回カウンセリング / プラン / 出張費 / その他）背景を少し濃く */
 .estimate-table tr.section td{background:#e7f2ff;font-weight:900;font-size:0.92em}
 .estimate-table tr.section td:first-child{background:#e7f2ff;z-index:2}
 .estimate-table tr.discount td{color:#c00;font-weight:900}
@@ -126,7 +121,6 @@ button.secondary{background:#eee;color:#111}
   .estimate-table tfoot td.num{font-size:14px}
   .estimate-table th:first-child,.estimate-table td:first-child{min-width:180px}
 }
-
 
 .form-section{margin-top:14px}
 .sectionTitle{
@@ -324,7 +318,6 @@ function setService(s){
   calc();
 }
 
-// 入力を変えたら自動で再計算（計算ボタン不要）
 function enableAutoCalc(){
   const ids = ["counseling","review","visits","cat","small","medium","large","ext","parkingCounselSel","parkingCounselOther","parkingVisitSel","parkingVisitOther","keyReturn","busy","afterHours"];
   ids.forEach(id=>{
@@ -334,7 +327,6 @@ function enableAutoCalc(){
     el.addEventListener("input", calc);
   });
 }
-
 
 function parkingValue(selId, otherId){
   const sel = document.getElementById(selId);
@@ -359,7 +351,6 @@ function calc(){
   const setMsg = (text) => { resultMessage.textContent = text || ""; };
   const clearTable = () => { estimateBody.innerHTML = ""; };
 
-  // 行追加ヘルパー
   const rows = [];
   const addSection = (title)=> rows.push({type:"section", title});
   const addItem = (item, unit, qty, sub, cls)=> rows.push({type:"item", item, unit, qty, sub, cls});
@@ -367,14 +358,10 @@ function calc(){
 
   const counselingTotal = counseling.checked ? MASTER.counseling : 0;
 
-  // 表示初期化
   setMsg("");
   clearTable();
-
-  // まずメタ
   setMeta(`サービス：${svc.label} / 回数：${v}回`);
 
-  // 回数0：初回カウンセリングのみOK
   if(v===0){
     const parkCounsel = parkingValue("parkingCounselSel","parkingCounselOther");
     const parkingCounselTotal = (counseling.checked && parkCounsel>0) ? parkCounsel : 0;
@@ -398,10 +385,8 @@ function calc(){
     return;
   }
 
-  // 頭数
   const heads = { cat:+cat.value, small:+small.value, medium:+medium.value, large:+large.value };
 
-  // 基準（baseが最大の種別）
   let basePrice = 0, baseKey = "";
   for(const k of Object.keys(heads)){
     if(heads[k]>0 && svc.plan[k][0] > basePrice){
@@ -410,7 +395,6 @@ function calc(){
     }
   }
 
-  // 頭数が全部0：初回カウンセリングのみOK
   if(basePrice===0){
     const parkCounsel = parkingValue("parkingCounselSel","parkingCounselOther");
     const parkingCounselTotal = (counseling.checked && parkCounsel>0) ? parkCounsel : 0;
@@ -437,7 +421,6 @@ function calc(){
   // ===== プラン（メイン + ペット追加）=====
   const baseSub = basePrice * v;
 
-  // 追加（基準種別は1頭分を基準に回す）
   const addItems = [];
   let addSubTotal = 0;
   for(const k of Object.keys(heads)){
@@ -445,42 +428,48 @@ function calc(){
     if(n<=0) continue;
 
     const addUnit = svc.plan[k][1];
-    const reduce = (k===baseKey) ? 1 : 0;
-    const addN = Math.max(0, n - reduce);
-    if(addN>0){
+    let reduce = (k===baseKey) ? 1 : 0;
+    let addN = Math.max(0, n - reduce);
+    let displayN = addN;
+
+    // ▼ ペットシッターの場合、猫は2匹まで追加料金なし
+    if(current === "sitter" && k === "cat"){
+      if(baseKey === "cat"){
+        reduce = 2;
+        addN = Math.max(0, n - reduce);
+        displayN = addN;
+      } else {
+        addN = n > 0 ? 1 + Math.max(0, n - 2) : 0;
+        displayN = n; 
+      }
+    }
+
+    if(addN > 0){
       const sub = addUnit * addN * v;
       addSubTotal += sub;
-      addItems.push({k, addN, addUnit, sub});
+      addItems.push({k, displayN, addN, addUnit, sub});
     }
   }
 
-  const planTotal = baseSub + addSubTotal; // 回数分のプラン合計
+  const planTotal = baseSub + addSubTotal;
 
   // ===== 割増・割引（プランのみ）=====
   const busyAdd = busy.checked ? planTotal * MASTER.busy : 0;
   const afterHoursAdd = afterHours.checked ? planTotal * MASTER.afterHours : 0;
   const planAfterSurcharges = planTotal + busyAdd + afterHoursAdd;
-  // レビュー割引は「基本プラン（メイン+ペット追加）」のみに適用（割増にはかけない）
   const reviewDiscount = review.checked ? planTotal * MASTER.review : 0;
 
   const planFinal = planAfterSurcharges - reviewDiscount;
 
   // ===== その他 =====
   const dispatchTotal = MASTER.dispatch * v;
-
-  const extCount = +ext.value; // 0-4
+  const extCount = +ext.value;
   const extTotal = extCount>0 ? svc.ext * extCount * v : 0;
-
   const parkCounsel = parkingValue("parkingCounselSel","parkingCounselOther");
   const parkVisit = parkingValue("parkingVisitSel","parkingVisitOther");
-
-  // カウンセリング時：チェックがONのときだけ、1回ぶん加算
   const parkingCounselTotal = (counseling.checked && parkCounsel>0) ? parkCounsel : 0;
-
-  // シッティング時：回数ぶん加算
   const parkingVisitTotal = parkVisit>0 ? parkVisit * v : 0;
-
-  const key = +keyReturn.value || 0; // 0/500/800（1回だけ）
+  const key = +keyReturn.value || 0;
   const keyTotal = key>0 ? key : 0;
 
   const grandTotal = planFinal + dispatchTotal + extTotal + parkingCounselTotal + parkingVisitTotal + keyTotal + counselingTotal;
@@ -495,11 +484,17 @@ function calc(){
   }
 
   addSection("プラン");
-  addItem(`メイン：${NAME[baseKey]}（1頭目）`, num(basePrice), String(v), num(baseSub));
+  
+  // メインペットの表示調整（猫がメインで複数いる場合）
+  let baseLabel = `メイン：${NAME[baseKey]}（1頭目）`;
+  if (current === "sitter" && baseKey === "cat" && heads.cat >= 2) {
+    baseLabel = `メイン：猫（1〜2頭目）`;
+  }
+  addItem(baseLabel, num(basePrice), String(v), num(baseSub));
 
   // ペット追加（別種 + メインの2頭目以降）
-  addItems.forEach(({k, addN, addUnit, sub})=>{
-    addItem(`追加：${NAME[k]}（${addN}頭）`, num(addUnit), String(v), num(sub));
+  addItems.forEach(({k, displayN, addN, addUnit, sub})=>{
+    addItem(`追加：${NAME[k]}（${displayN}頭）`, num(addUnit), String(v), num(sub));
   });
 
   if(busyAdd>0) addItem("繁忙期（+20%）※プラン", "", "", `+${num(busyAdd)}`, "surcharge");
@@ -538,7 +533,6 @@ function renderEstimate(rows, grandTotal){
       return `<tr class="section"><td class="sectionCell">${esc(r.title)}</td><td></td><td></td><td></td></tr>`;
     }
     const cls = r.cls ? ` ${r.cls}` : "";
-    // muted row: message style (span all columns)
     if(r.cls==="muted-row"){
       return `<tr><td colspan="4" class="muted">${esc(r.item)}</td></tr>`;
     }
@@ -552,7 +546,6 @@ function renderEstimate(rows, grandTotal){
 }
 
 function buildCopyText(rows, grandTotal){
-  // Excelに貼れるタブ区切り（TSV）
   const lines = [];
   lines.push(["お見積り","単価","回数","小計"].join("\t"));
   rows.forEach(r=>{
@@ -579,9 +572,6 @@ function copyResult(){
   navigator.clipboard.writeText(text);
   alert("コピーしました");
 }
-
-
-
 
 enableAutoCalc();
 calc();
